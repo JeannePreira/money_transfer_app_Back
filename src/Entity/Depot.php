@@ -4,11 +4,24 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\DepotRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=DepotRepository::class)
- * @ApiResource()
+ * @ApiResource(
+ *      collectionOperations={
+ *          "depotCompte_cassier" = {
+ *              "method" = "POST",
+ *              "path" =  "/cassier/depot/",
+ *              "denormalization_context"={"groups"={"cassier:write"}},
+ *              "security" = "is_granted('ROLE_ADMIN_AGENCE')",
+ *              "security_message" = "Seules les admin ont accèes à cette ressource!"
+ *          },
+ *      }
+ * 
+ * )
  */
 class Depot
 {
@@ -21,21 +34,29 @@ class Depot
 
     /**
      * @ORM\Column(type="date")
+     * @Groups({"cassier:write"})
+     * @Assert\NotBlank(message="La date est obligatoire")
      */
     private $date;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"cassier:write"})
+     * @Assert\NotBlank(message="Le montant est obligatoire")
      */
     private $montant;
 
     /**
      * @ORM\ManyToOne(targetEntity=Compte::class, inversedBy="depot")
+     * @Groups({"cassier:write"})
+     * @Assert\NotBlank(message="Le compte est obligatoire")
      */
     private $compte;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="depot")
+     * @Groups({"cassier:write"})
+     * @Assert\NotBlank(message="L'utilisateur est obligatoire")
      */
     private $user;
 

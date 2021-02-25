@@ -6,8 +6,9 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ProfilRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
-use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
@@ -42,6 +43,7 @@ class Profil
     /**
      * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank(message="Le Nom est obligatoire")
+     * @Groups({"users:read", "users:write", "cassier:read"})
      */
     private $libelle;
 

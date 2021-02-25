@@ -5,10 +5,38 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\TransactionRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=TransactionRepository::class)
- * @ApiResource()
+ * @ApiResource(
+ *      attributes = {
+ *         "security" = "is_granted('ROLE_ADMIN-SYSTEM')",
+ *         "security_message" = "Seules les admin ont accèes à cette ressource!"
+ *      },
+ *      collectionOperations={
+ *          "getPart_adminS" = {
+ *              "method" = "get",
+ *              "path" =  "/adminSystem/transaction/",
+ *              "normalization_context"={"groups"={"part:read"}},
+ *              "security" = "(is_granted('ROLE_ADMIN-SYSTEM') or is_granted('ROLE_ADMIN_AGENCE'))",
+ *              "security_message" = "Seules les admin ont accèes à cette ressource!"
+ *          },
+ *           "Transaction_User" = {
+ *              "method" = "POST",
+ *              "path" =  "utilisateur/deposer/",
+ *              "denormalization_context"={"groups"={"deposer:write"}}
+ *          },
+ *          "Transaction_User" = {
+ *              "method" = "POST",
+ *              "path" =  "utilisateur/retrait/",
+ *              "denormalization_context"={"groups"={"retrait:write"}}
+ *          }
+ *      },
+ *      itemOperations={
+ *          "delete", "get"
+ *      }
+ * )
  */
 class Transaction
 {
@@ -16,72 +44,86 @@ class Transaction
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"part:read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="integer")
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $montant;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column(type="date", nullable=true)
+     * @Groups({"deposer:write"})
      */
     private $dateDepot;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column(type="date", nullable=true)
+     * @Groups({"retrait:write"})
      */
     private $dateRetrait;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column(type="date", nullable=true)
+     * 
      */
     private $dateAnnulation;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $TTC;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"part:read", "deposer:write", "retrait:write"})
      */
     private $fraisEtat;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"part:read", "deposer:write", "retrait:write"})
      */
     private $fraisSystem;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"deposer:write","retrait:write"})
      */
     private $fraisEnvoi;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $fraisRetrait;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $codeTransaction;
 
 
     /**
      * @ORM\ManyToOne(targetEntity=Compte::class, inversedBy="transaction")
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $compte;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Client::class, inversedBy="envoi")
+     * @ORM\ManyToOne(targetEntity=Client::class, inversedBy="envoi", cascade={"persist", "remove"})
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $client;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="retrait")
+     * @Groups({"transaction:write", "retrait:write"})
      */
     private $user;
 

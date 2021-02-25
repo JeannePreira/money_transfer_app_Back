@@ -7,6 +7,7 @@ use App\Repository\ClientRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=ClientRepository::class)
@@ -23,26 +24,31 @@ class Client
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"part:read", "deposer:write", "retrait:write"})
      */
     private $nomComplet;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $CNI;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="integer", length=255)
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $phone;
 
     /**
      * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="client")
+     * @Groups({"deposer:write"})
      */
     private $envoi;
 
     /**
      * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="client")
+     * @Groups({"deposer:write", "retrait:write"})
      */
     private $recuperer;
 

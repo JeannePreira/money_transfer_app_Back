@@ -41,7 +41,7 @@ class Agence
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @Groups({"agence:read", "compte:write"})
+     * @Groups({"agence:read", "compte:write", "users:write"})
      */
     private $id;
 

@@ -6,21 +6,26 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\CompteRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Core\Annotation\ApiSubresource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass=CompteRepository::class)
  * @ApiResource(
- *      
- *      
+ *       attributes = {
+ *         "security" = "is_granted('ROLE_ADMIN-SYSTEM')",
+ *         "security_message" = "Seules les admin ont accèes à cette ressource!"
+ *      },
  *      collectionOperations={
  *          "createCompte_adminS" = {
  *              "method" = "POST",
  *              "path" =  "/adminSystem/compte/",
  *              "denormalization_context"={"groups"={"compte:write"}},
- *          },
+ *              
+ *          }
  *      },
  *       itemOperations={
  *          "getCompte_adminS" = {
@@ -28,7 +33,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
  *              "path" =  "/adminSystem/compte/{id}",
  *              "normalization_context"={"groups"={"compte:read"}},
  *          },
+ *          "lockCompte_adminS" = {
+ *              "method" = "delete",
+ *              "path" =  "/adminSystem/compte/{id}",
+ *              "normalization_context"={"groups"={"compte:read"}},
+ *          }
  *      }
+ * )
+ *  @UniqueEntity(
+ *   fields={"numero"},
+ *   message="Le libelle doit être unique"
  * )
  */
 class Compte
@@ -37,18 +51,21 @@ class Compte
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"cassier:write"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="integer")
-     * @Groups({"compte:read"})
+     * @Assert\NotBlank(message="Le numero est obligatoire")
+     * @Groups({"compte:read", "compte:write"})
      */
     private $numero;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"compte:read"})
+     * @Assert\NotBlank(message="Le Nom est obligatoire")
+     * @Groups({"compte:read", "compte:write"})
      */
     private $solde;
 
@@ -72,12 +89,18 @@ class Compte
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="adminSysteme")
-     * @Groups({"compte:read"})
+     * @Groups({"compte:read", "compte:write"})
      */
     private $user;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $archivage;
+
     public function __construct()
     {
+        $this->archivage = 0;
         $this->depot = new ArrayCollection();
         $this->transaction = new ArrayCollection();
     }
@@ -191,6 +214,18 @@ class Compte
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getArchivage(): ?bool
+    {
+        return $this->archivage;
+    }
+
+    public function setArchivage(bool $archivage): self
+    {
+        $this->archivage = isset($archivage) ? $archivage:false;
 
         return $this;
     }
