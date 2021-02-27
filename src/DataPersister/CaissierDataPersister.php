@@ -33,6 +33,7 @@ final class CaissierDataPersister implements ContextAwareDataPersisterInterface
     public function remove($data, array $context = [])
     {
         // $compte = $this->compteRepo->findOneById($data);
+       
         $data->setArchivage(1);
         
         $this->manager->persist($data);

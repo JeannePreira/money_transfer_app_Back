@@ -36,10 +36,8 @@ class UserController extends AbstractController
         if(!($user instanceof User)){
             return new JsonResponse($user, Response::HTTP_BAD_REQUEST);
         }
-        
-        // $userService->sendMail($user);
         $manager->persist($user);
-        $manager->flush();
+        $manager->flush();      
 
         return new JsonResponse(["message"=>"User Add", Response::HTTP_CREATED]);
     }

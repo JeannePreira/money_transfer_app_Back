@@ -23,11 +23,6 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
  *              "deserialize" = false,
  *              "route_name" = "addUser"
  *          },
- *          "getUsers_adminA" = {
- *              "method" = "get",
- *              "path" =  "/adminAgence/user/",
- *              "normalization_context"={"groups"={"users:read"}},
- *          },
  *          "getCaissiers_adminS" = {
  *              "method" = "get",
  *              "path" =  "/adminSystem/cassier/",
@@ -40,9 +35,14 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
  *              "path" =  "/adminSystem/user/{id}",
  *              "normalization_context"={"groups"={"user:read"}},
  *          },
- *          "lockUser_adminS" = {
+ *          "lockCaissier_adminS" = {
  *              "method" = "delete",
  *              "path" =  "/adminSystem/user/{id}",
+ *              "normalization_context"={"groups"={"user:read"}},
+ *          },
+ *          "lockUser_adminA" = {
+ *              "method" = "delete",
+ *              "path" =  "/adminAgence/user/{id}",
  *              "normalization_context"={"groups"={"user:read"}},
  *          },
  *      },
@@ -55,12 +55,13 @@ class User implements UserInterface
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"agenceUsers:read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Groups({"users:read","users:write", "cassier:read"})
+     * @Groups({"users:read","users:write", "cassier:read", "agenceUsers:read"})
      */
     private $username;
 
@@ -70,7 +71,7 @@ class User implements UserInterface
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
-     * @Groups({"users:write"})
+     * @Groups({"users:write", "agenceUsers:read"})
      */
     private $password;
 
@@ -91,42 +92,32 @@ class User implements UserInterface
     private $agence;
 
     /**
-     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="user")
-     */
-    private $retrait;
-
-    /**
-     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="user")
-     */
-    private $deposer;
-
-    /**
      * @ORM\ManyToOne(targetEntity=Profil::class, inversedBy="users")
-     * @Groups({"users:read", "users:write", "cassier:read"})
+     * @Groups({"users:read", "users:write", "cassier:read", "agenceUsers:read"})
      */
     private $profil;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"users:read","users:write", "cassier:read"})
+     * @Groups({"users:read","users:write", "cassier:read", "agenceUsers:read"})
      */
     private $nom;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"users:read","users:write", "cassier:read"})
+     * @Groups({"users:read","users:write", "cassier:read", "agenceUsers:read"})
      */
     private $prenom;
 
     /**
      * @ORM\Column(type="string")
-     * @Groups({"users:read","users:write", "cassier:read"})
+     * @Groups({"users:read","users:write", "cassier:read", "agenceUsers:read"})
      */
     private $phone;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"users:read","users:write", "cassier:read"})
+     * @Groups({"users:read","users:write", "cassier:read", "agenceUsers:read"})
      */
     private $cni;
 
@@ -138,7 +129,7 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"users:read","users:write", "cassier:read"})
+     * @Groups({"users:read","users:write", "cassier:read", "agenceUsers:read"})
      */
     private $adresse;
 
@@ -147,6 +138,16 @@ class User implements UserInterface
      */
     private $archivage;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="userDepot")
+     */
+    private $transaction;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="userRetrait")
+     */
+    private $transactionRetrait;
+
     public function __construct()
     {
         $this->depot = new ArrayCollection();
@@ -154,6 +155,8 @@ class User implements UserInterface
         $this->agence = new ArrayCollection();
         $this->retrait = new ArrayCollection();
         $this->deposer = new ArrayCollection();
+        $this->transaction = new ArrayCollection();
+        $this->transactionRetrait = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -304,66 +307,6 @@ class User implements UserInterface
         return $this;
     }
 
-    /**
-     * @return Collection|Transaction[]
-     */
-    public function getRetrait(): Collection
-    {
-        return $this->retrait;
-    }
-
-    public function addRetrait(Transaction $retrait): self
-    {
-        if (!$this->retrait->contains($retrait)) {
-            $this->retrait[] = $retrait;
-            $retrait->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeRetrait(Transaction $retrait): self
-    {
-        if ($this->retrait->removeElement($retrait)) {
-            // set the owning side to null (unless already changed)
-            if ($retrait->getUser() === $this) {
-                $retrait->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Transaction[]
-     */
-    public function getDeposer(): Collection
-    {
-        return $this->deposer;
-    }
-
-    public function addDeposer(Transaction $deposer): self
-    {
-        if (!$this->deposer->contains($deposer)) {
-            $this->deposer[] = $deposer;
-            $deposer->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDeposer(Transaction $deposer): self
-    {
-        if ($this->deposer->removeElement($deposer)) {
-            // set the owning side to null (unless already changed)
-            if ($deposer->getUser() === $this) {
-                $deposer->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getProfil(): ?Profil
     {
         return $this->profil;
@@ -456,6 +399,66 @@ class User implements UserInterface
     public function setArchivage(bool $archivage): self
     {
         $this->archivage = $archivage;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Transaction[]
+     */
+    public function getTransaction(): Collection
+    {
+        return $this->transaction;
+    }
+
+    public function addTransaction(Transaction $transaction): self
+    {
+        if (!$this->transaction->contains($transaction)) {
+            $this->transaction[] = $transaction;
+            $transaction->setUserDepot($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTransaction(Transaction $transaction): self
+    {
+        if ($this->transaction->removeElement($transaction)) {
+            // set the owning side to null (unless already changed)
+            if ($transaction->getUserDepot() === $this) {
+                $transaction->setUserDepot(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Transaction[]
+     */
+    public function getTransactionRetrait(): Collection
+    {
+        return $this->transactionRetrait;
+    }
+
+    public function addTransactionRetrait(Transaction $transactionRetrait): self
+    {
+        if (!$this->transactionRetrait->contains($transactionRetrait)) {
+            $this->transactionRetrait[] = $transactionRetrait;
+            $transactionRetrait->setUserRetrait($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTransactionRetrait(Transaction $transactionRetrait): self
+    {
+        if ($this->transactionRetrait->removeElement($transactionRetrait)) {
+            // set the owning side to null (unless already changed)
+            if ($transactionRetrait->getUserRetrait() === $this) {
+                $transactionRetrait->setUserRetrait(null);
+            }
+        }
 
         return $this;
     }

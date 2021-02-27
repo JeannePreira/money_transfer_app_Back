@@ -4,17 +4,13 @@
 namespace App\Services;
 
 use App\Repository\ProfilRepository;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-
-
 class UserService
 {
     public function __construct(
-        // \Swift_Mailer $mailer,
         UserPasswordEncoderInterface $encoder,
         SerializerInterface $serializer,
         ProfilRepository $profilRepo,
@@ -22,7 +18,6 @@ class UserService
     )
     {
         $this->serializer = $serializer;
-        // $this->Swift_Mailer = $mailer;
         $this->encodePassword = $encoder;
         $this->profilRepo = $profilRepo;
         $this->validator = $validator;
@@ -32,23 +27,6 @@ class UserService
     {
         return $p;
     }
-
-    // public function sendMail($user)
-    // {
-    //     $mail=$user->getEmail();
-    //     $password=$user->getPassword();
-    //     $msg=(new\Swift_Message('noveau mot de passe'))
-    //         ->setFrom('jeano@gmail.com')
-    //         ->setTo($mail)
-    //         ->setBody(
-    //             'utiliser le mot de passe suggéré'.$password
-    //         );
-
-    //     $this->Swift_Mailer->send($msg);
-    // }
-
-
-
 
     public function addUser($request, $profil=null)
     {

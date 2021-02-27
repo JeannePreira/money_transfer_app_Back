@@ -11,8 +11,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
  * @ORM\Entity(repositoryClass=TransactionRepository::class)
  * @ApiResource(
  *      attributes = {
- *         "security" = "is_granted('ROLE_ADMIN-SYSTEM')",
- *         "security_message" = "Seules les admin ont accèes à cette ressource!"
+ *         "security" = "is_granted('ROLE_ADMIN_AGENCE')",
+ *         "security_message" = "Seules les admin ont accèes à cette ressource!",
+ *            "denormalization_context"={"groups"={"deposer:write"}},
  *      },
  *      collectionOperations={
  *          "getPart_adminS" = {
@@ -22,19 +23,25 @@ use Symfony\Component\Serializer\Annotation\Groups;
  *              "security" = "(is_granted('ROLE_ADMIN-SYSTEM') or is_granted('ROLE_ADMIN_AGENCE'))",
  *              "security_message" = "Seules les admin ont accèes à cette ressource!"
  *          },
- *           "Transaction_User" = {
+ *           "TransactionDepot" = {
  *              "method" = "POST",
- *              "path" =  "utilisateur/deposer/",
- *              "denormalization_context"={"groups"={"deposer:write"}}
+ *              "path" =  "/utilisateur/deposer/",
+ *              "deserialize" =false,
+ *              "route_name" = "depotTransaction"
  *          },
- *          "Transaction_User" = {
+ *          "TransactionRetrait" = {
  *              "method" = "POST",
- *              "path" =  "utilisateur/retrait/",
- *              "denormalization_context"={"groups"={"retrait:write"}}
+ *              "path" =  "/utilisateur/retrait/",
+ *              "deserialize" =false,
+ *              "route_name" = "retraitTransaction"
  *          }
  *      },
  *      itemOperations={
- *          "delete", "get"
+ *          "Impression" = {
+ *              "method" = "GET",
+ *              "path" =  "/utilisateur/transaction/{id}",
+ *              "normalization_context"={"groups"={"impression:read"}},
+ *          } 
  *      }
  * )
  */
@@ -49,20 +56,14 @@ class Transaction
     private $id;
 
     /**
-     * @ORM\Column(type="integer")
-     * @Groups({"deposer:write", "retrait:write"})
-     */
-    private $montant;
-
-    /**
-     * @ORM\Column(type="date", nullable=true)
-     * @Groups({"deposer:write"})
+     * @ORM\Column(type="date")
+     * @Groups({"deposer:write", "impression:read"})
      */
     private $dateDepot;
 
     /**
      * @ORM\Column(type="date", nullable=true)
-     * @Groups({"retrait:write"})
+     * @Groups({"retrait:write", "deposer:write"})
      */
     private $dateRetrait;
 
@@ -104,44 +105,56 @@ class Transaction
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Groups({"deposer:write", "retrait:write"})
+     * @Groups({"deposer:write", "retrait:write", "impression:read"})
      */
     private $codeTransaction;
 
 
     /**
      * @ORM\ManyToOne(targetEntity=Compte::class, inversedBy="transaction")
-     * @Groups({"deposer:write", "retrait:write"})
+     * @Groups({"retrait:write"})
      */
     private $compte;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Client::class, inversedBy="envoi", cascade={"persist", "remove"})
-     * @Groups({"deposer:write", "retrait:write"})
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="transaction")
+     * @ORM\JoinColumn(nullable=false)
+     * 
      */
-    private $client;
+    private $userDepot;
 
     /**
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="retrait")
-     * @Groups({"transaction:write", "retrait:write"})
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="transactionRetrait")
+     * @ORM\JoinColumn(nullable=true)
      */
-    private $user;
+    private $userRetrait;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Client::class, inversedBy="transaction", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     * @Groups({"impression:read"})
+     */
+    private $clientEnvoi;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Client::class, inversedBy="transactionRetrait", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     * @Groups({"impression:read"})
+     */
+    private $clientRetrait;
+
+    /**
+     * @ORM\Column(type="integer")
+     * @Groups({"deposer:write"})
+     * 
+     */
+    private $montant;
+
+
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getMontant(): ?int
-    {
-        return $this->montant;
-    }
-
-    public function setMontant(int $montant): self
-    {
-        $this->montant = $montant;
-
-        return $this;
     }
 
     public function getDateDepot(): ?\DateTimeInterface
@@ -264,26 +277,62 @@ class Transaction
         return $this;
     }
 
-    public function getClient(): ?Client
+    public function getUserDepot(): ?User
     {
-        return $this->client;
+        return $this->userDepot;
     }
 
-    public function setClient(?Client $client): self
+    public function setUserDepot(?User $userDepot): self
     {
-        $this->client = $client;
+        $this->userDepot = $userDepot;
 
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUserRetrait(): ?User
     {
-        return $this->user;
+        return $this->userRetrait;
     }
 
-    public function setUser(?User $user): self
+    public function setUserRetrait(?User $userRetrait): self
     {
-        $this->user = $user;
+        $this->userRetrait = $userRetrait;
+
+        return $this;
+    }
+
+    public function getClientEnvoi(): ?Client
+    {
+        return $this->clientEnvoi;
+    }
+
+    public function setClientEnvoi(?Client $clientEnvoi): self
+    {
+        $this->clientEnvoi = $clientEnvoi;
+
+        return $this;
+    }
+
+    public function getClientRetrait(): ?Client
+    {
+        return $this->clientRetrait;
+    }
+
+    public function setClientRetrait(?Client $clientRetrait): self
+    {
+        $this->clientRetrait = $clientRetrait;
+
+        return $this;
+    }
+
+    public function getMontant(): ?int
+    {
+        return $this->montant;
+    }
+
+    public function setMontant(int $montant): self
+    {
+        $this->montant = $montant;
 
         return $this;
     }

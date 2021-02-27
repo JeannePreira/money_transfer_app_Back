@@ -23,8 +23,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *          "createCompte_adminS" = {
  *              "method" = "POST",
  *              "path" =  "/adminSystem/compte/",
- *              "denormalization_context"={"groups"={"compte:write"}},
- *              
+ *              "denormalization_context"={"groups"={"compte:write"}}, 
+ *              "security" = "is_granted('ROLE_ADMIN-SYSTEM')",
+ *              "security_message" = "Seules les admin ont accèes à cette ressource!"    
  *          }
  *      },
  *       itemOperations={
@@ -32,6 +33,11 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *              "method" = "GET",
  *              "path" =  "/adminSystem/compte/{id}",
  *              "normalization_context"={"groups"={"compte:read"}},
+ *          },
+ *          "updateCompte_adminA" = {
+ *              "method" = "put",
+ *              "path" =  "/adminSystem/compte/{id}",
+ *              "normalization_context"={"groups"={"compte:write"}},
  *          },
  *          "lockCompte_adminS" = {
  *              "method" = "delete",
@@ -76,13 +82,6 @@ class Compte
     private $depot;
 
     /**
-     * @ORM\OneToOne(targetEntity=Agence::class, cascade={"persist", "remove"})
-     * @Groups({"compte:read", "compte:write"})
-     * @ApiSubresource
-     */
-    private $agence;
-
-    /**
      * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="compte")
      */
     private $transaction;
@@ -101,6 +100,7 @@ class Compte
     public function __construct()
     {
         $this->archivage = 0;
+        $this->solde = 700000;
         $this->depot = new ArrayCollection();
         $this->transaction = new ArrayCollection();
     }
@@ -160,18 +160,6 @@ class Compte
                 $depot->setCompte(null);
             }
         }
-
-        return $this;
-    }
-
-    public function getAgence(): ?Agence
-    {
-        return $this->agence;
-    }
-
-    public function setAgence(?Agence $agence): self
-    {
-        $this->agence = $agence;
 
         return $this;
     }

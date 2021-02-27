@@ -24,12 +24,12 @@ class Client
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"part:read", "deposer:write", "retrait:write"})
+     * @Groups({"part:read", "deposer:write", "retrait:write", "impression:read"})
      */
     private $nomComplet;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      * @Groups({"deposer:write", "retrait:write"})
      */
     private $CNI;
@@ -41,21 +41,21 @@ class Client
     private $phone;
 
     /**
-     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="client")
-     * @Groups({"deposer:write"})
+     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="clientEnvoi")
      */
-    private $envoi;
+    private $transaction;
 
     /**
-     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="client")
-     * @Groups({"deposer:write", "retrait:write"})
+     * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="clientRetrait")
      */
-    private $recuperer;
+    private $transactionRetrait;
 
     public function __construct()
     {
         $this->envoi = new ArrayCollection();
         $this->recuperer = new ArrayCollection();
+        $this->transaction = new ArrayCollection();
+        $this->transactionRetrait = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -102,27 +102,27 @@ class Client
     /**
      * @return Collection|Transaction[]
      */
-    public function getEnvoi(): Collection
+    public function getTransaction(): Collection
     {
-        return $this->envoi;
+        return $this->transaction;
     }
 
-    public function addEnvoi(Transaction $envoi): self
+    public function addTransaction(Transaction $transaction): self
     {
-        if (!$this->envoi->contains($envoi)) {
-            $this->envoi[] = $envoi;
-            $envoi->setClient($this);
+        if (!$this->transaction->contains($transaction)) {
+            $this->transaction[] = $transaction;
+            $transaction->setClientEnvoi($this);
         }
 
         return $this;
     }
 
-    public function removeEnvoi(Transaction $envoi): self
+    public function removeTransaction(Transaction $transaction): self
     {
-        if ($this->envoi->removeElement($envoi)) {
+        if ($this->transaction->removeElement($transaction)) {
             // set the owning side to null (unless already changed)
-            if ($envoi->getClient() === $this) {
-                $envoi->setClient(null);
+            if ($transaction->getClientEnvoi() === $this) {
+                $transaction->setClientEnvoi(null);
             }
         }
 
@@ -132,30 +132,31 @@ class Client
     /**
      * @return Collection|Transaction[]
      */
-    public function getRecuperer(): Collection
+    public function getTransactionRetrait(): Collection
     {
-        return $this->recuperer;
+        return $this->transactionRetrait;
     }
 
-    public function addRecuperer(Transaction $recuperer): self
+    public function addTransactionRetrait(Transaction $transactionRetrait): self
     {
-        if (!$this->recuperer->contains($recuperer)) {
-            $this->recuperer[] = $recuperer;
-            $recuperer->setClient($this);
+        if (!$this->transactionRetrait->contains($transactionRetrait)) {
+            $this->transactionRetrait[] = $transactionRetrait;
+            $transactionRetrait->setClientRetrait($this);
         }
 
         return $this;
     }
 
-    public function removeRecuperer(Transaction $recuperer): self
+    public function removeTransactionRetrait(Transaction $transactionRetrait): self
     {
-        if ($this->recuperer->removeElement($recuperer)) {
+        if ($this->transactionRetrait->removeElement($transactionRetrait)) {
             // set the owning side to null (unless already changed)
-            if ($recuperer->getClient() === $this) {
-                $recuperer->setClient(null);
+            if ($transactionRetrait->getClientRetrait() === $this) {
+                $transactionRetrait->setClientRetrait(null);
             }
         }
 
         return $this;
     }
+  
 }

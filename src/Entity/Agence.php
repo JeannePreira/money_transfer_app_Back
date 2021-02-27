@@ -19,15 +19,25 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *          "createAgence_adminS" = {
  *              "method" = "POST",
  *              "path" =  "/adminSystem/agence/",
- *              "security"="is_granted('ROLE_ADMIN')",
+ *              "security"="is_granted('ROLE_ADMIN-SYSTEM')",
  *              "security_message"="Vous n'avez pas access à cette Ressource"
- *          },
+ *          }
  *      },
  *      itemOperations={
  *          "getCompte_adminS" = {
  *              "method" = "GET",
  *              "path" =  "/adminSystem/agence/{id}"
  *          },
+ *          "getUsers_adminA" = {
+ *              "method" = "get",
+ *              "path" =  "/adminAgence/user/agence/{id}",
+ *              "normalization_context"={"groups"={"agenceUsers:read"}},
+ *          },
+ *          "lockAgence_adminA" = {
+ *              "method" = "delete",
+ *              "path" =  "/adminAgence/agence/{id}",
+ *              "normalization_context"={"groups"={"agenceUsers:read"}},
+ *          }
  *      }
  * )
  * @UniqueEntity(
@@ -47,7 +57,7 @@ class Agence
 
     /**
      * @ORM\Column(type="string", length=255, unique=true)
-     * @Groups({"agence:read"})
+     * @Groups({"agence:read", "agenceUsers:read"})
      * @Assert\NotBlank(message="Le Nom est obligatoire")
      */
     private $nom;
@@ -65,9 +75,16 @@ class Agence
     private $status;
 
     /**
-     * @ORM\OneToMany(targetEntity=User::class, mappedBy="agence")
+     * @ORM\OneToMany(targetEntity=User::class, mappedBy="agence", cascade={"persist", "remove"})
+     * @Groups({"agenceUsers:read"})
      */
     private $users;
+
+    /**
+     * @ORM\OneToOne(targetEntity=Compte::class, cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $compte;
 
     public function __construct()
     {
@@ -148,5 +165,16 @@ class Agence
         return $this;
     }
 
+    public function getCompte(): ?Compte
+    {
+        return $this->compte;
+    }
+
+    public function setCompte(Compte $compte): self
+    {
+        $this->compte = $compte;
+
+        return $this;
+    }
 
 }

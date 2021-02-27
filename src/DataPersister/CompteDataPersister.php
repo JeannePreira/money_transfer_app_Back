@@ -23,7 +23,7 @@ final class CompteDataPersister implements ContextAwareDataPersisterInterface
     public function persist($data, array $context = [])
     {
         $data->setNumero($data->getNumero());
-        $data->setAgence($data->getAgence());
+        
         $data->setUser($this->security->getUser());
         $compte = $this->manager->persist($data);
         $this->manager->flush($compte);

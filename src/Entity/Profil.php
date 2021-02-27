@@ -43,7 +43,7 @@ class Profil
     /**
      * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank(message="Le Nom est obligatoire")
-     * @Groups({"users:read", "users:write", "cassier:read"})
+     * @Groups({"users:read", "users:write", "cassier:read", "agenceUsers:read"})
      */
     private $libelle;
 
